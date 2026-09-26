@@ -1,0 +1,145 @@
+================================================================
+NMAP NETWORK SCAN RESULTS
+================================================================
+Target: 127.0.0.1 (localhost) — Kali Linux VM
+Scanner: Nmap 7.98
+Date: 2026-09-26
+Scanned by: Vivek Sharma
+
+Note: An initial scan was also performed against the VM's external
+interface IP (10.218.215.156). That scan reported all 1000 ports
+filtered (no response), most likely due to host firewall rules or
+no services bound to that interface. Localhost (127.0.0.1) was
+scanned instead to reliably capture locally running services for
+analysis, per this task's objective. Both results are documented
+below for completeness.
+
+================================================================
+1. EXTERNAL INTERFACE SCAN (10.218.215.156)
+================================================================
+Command: nmap 10.218.215.156
+
+Nmap scan report for 10.218.215.156
+Host is up.
+All 1000 scanned ports on 10.218.215.156 are in ignored states.
+Not shown: 1000 filtered tcp ports (no-response)
+
+Nmap done: 1 IP address (1 host up) scanned in 204.69 seconds
+
+Interpretation: All ports filtered indicates packets are being
+silently dropped rather than actively refused — consistent with a
+host-based firewall blocking inbound traffic on the external
+interface, or simply no services listening on that interface.
+
+================================================================
+2. BASIC SCAN (127.0.0.1)
+================================================================
+Command: nmap 127.0.0.1
+
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.0000050s latency).
+Not shown: 998 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+
+Nmap done: 1 IP address (1 host up) scanned in 0.07 seconds
+
+================================================================
+3. SERVICE VERSION SCAN (127.0.0.1)
+================================================================
+Command: nmap -sV 127.0.0.1
+
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.0000050s latency).
+Not shown: 998 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 10.4p1 Debian 5 (protocol 2.0)
+80/tcp open  http    Apache httpd 2.4.66 ((Debian))
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap done: 1 IP address (1 host up) scanned in 6.70 seconds
+
+================================================================
+4. OS DETECTION SCAN (127.0.0.1)
+================================================================
+Command: sudo nmap -O 127.0.0.1
+
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.000042s latency).
+Not shown: 998 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+Device type: general purpose
+Running: Linux 5.X|6.X
+OS CPE: cpe:/o:linux:linux_kernel:5 cpe:/o:linux:linux_kernel:6
+OS details: Linux 5.0 - 6.2
+Network Distance: 0 hops
+
+Nmap done: 1 IP address (1 host up) scanned in 1.58 seconds
+
+================================================================
+5. OPEN PORT ANALYSIS
+================================================================
+
+PORT 22/tcp — SSH (OpenSSH 10.4p1, Debian)
+--------------------------------------------
+What it does:
+  SSH (Secure Shell) provides encrypted remote command-line access
+  to a machine. It's the standard way administrators log into
+  Linux servers remotely, and also supports secure file transfer
+  (SFTP/SCP) and port forwarding/tunneling.
+
+Security risk assessment:
+  - Baseline risk is LOW when properly configured: SSH traffic is
+    encrypted, and the version detected (OpenSSH 10.4p1) is
+    current, so it isn't exposed to old known CVEs tied to
+    outdated OpenSSH releases.
+  - Risk increases significantly if:
+      * Password authentication is enabled instead of key-based
+        auth (makes it vulnerable to brute-force/credential-
+        stuffing attacks).
+      * Root login is permitted directly (PermitRootLogin yes).
+      * It is exposed to the public internet without a firewall,
+        fail2ban, or rate-limiting.
+  - Recommended hardening: disable password auth in favor of SSH
+    keys, disable root login, and restrict access with a firewall
+    (e.g. ufw) or by binding SSH to specific trusted IPs.
+
+PORT 80/tcp — HTTP (Apache httpd 2.4.66)
+--------------------------------------------
+What it does:
+  Apache HTTP Server serves web content over unencrypted HTTP.
+  It's one of the most widely deployed web servers in the world,
+  used to host websites, APIs, and web applications.
+
+Security risk assessment:
+  - Baseline risk is MODERATE: HTTP (unlike HTTPS) transmits data
+    in plaintext, so any content served — including login forms
+    or session cookies, if present — could be intercepted via a
+    man-in-the-middle attack.
+  - Version detection banners (like "Apache httpd 2.4.66") are
+    themselves a minor risk: they tell an attacker exactly which
+    version to look up known vulnerabilities for.
+  - Common Apache risks include outdated modules, directory
+    listing left enabled, default/example pages left in place,
+    and misconfigured permissions.
+  - Recommended hardening: serve over HTTPS (TLS) instead of plain
+    HTTP, disable the Apache version banner in server config
+    (ServerTokens Prod), disable directory listing (Options
+    -Indexes), and keep Apache patched.
+
+================================================================
+6. SUMMARY
+================================================================
+- 2 open ports identified on the target: 22/tcp (SSH), 80/tcp (HTTP)
+- 998 ports closed (actively refused connections)
+- OS fingerprint suggests a Linux 5.x/6.x kernel, consistent with
+  the Kali Linux VM used for this scan
+- No unnecessary or unexpected services were found running beyond
+  the two intentionally started for this exercise
+- Overall attack surface is minimal and consistent with a freshly
+  configured VM; risk is primarily configuration-dependent (auth
+  method for SSH, encryption for HTTP) rather than inherent to the
+  services themselves
